@@ -47,7 +47,7 @@ class BixiStationOccupation:
     day = 'W-SUN'
 
     def __init__(self):
-        return name
+        self.name = 'Default' + str(datetime.now())
 
     def get_station_information(self):
         return requests.get('https://api-core.bixi.com/gbfs/en/station_information.json').json()
@@ -58,12 +58,11 @@ class BixiStationOccupation:
     def get_week_days_in_year(self, year, day):
         pd.date_range(start=str(year), end=str(year + 1), freq=day).strftime('%Y-%m-%d').tolist()
 
-
     def get_station_occupancy(self, station_short_name, year, day, hour):
         conn = psycopg2.connect(host="localhost", database="bixi_db", user="bixi", password="bixi")
         cur = conn.cursor()
 
-        station_status = get_stations_status()
+        station_status = self.get_stations_status()
 
         occupation_data = {}
 
@@ -71,12 +70,23 @@ class BixiStationOccupation:
         for station in station_status['data']['stations']:
             occupation_data['s' + station['station_id']] = station['num_bikes_available']
 
+        for s in self.get_station_information()['data']['stations']:
+            if s['short_name'] == station_short_name:
+                station_id = s['station_id']
+                print(s)
+                break
+
         station_id = 's' + station_id
         placeholders = ', '.join(['%s'] * len(occupation_data))
         columns = ', '.join(occupation_data.keys())
 
-        for d in get_week_days_in_year(year, day):
-            sql = "SELECT %s FROM %s WHERE upd_timestamp like %s %s" % (station_id, 'occupation', d, hour)
+        # for d in self.get_week_days_in_year(year, day):
+        #     sql = "SELECT %s FROM %s WHERE upd_timestamp like %s %s" % (station_id, 'occupation', d, hour)
 
         cur.close()
         conn.close()
+
+
+test = BixiStationOccupation()
+
+test.get_stations_status()
