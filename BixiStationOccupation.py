@@ -46,8 +46,13 @@ class BixiStationOccupation:
     # frequency(Saturdays)
     day = 'W-SUN'
 
-    def __init__(self):
-        self.name = 'Default' + str(datetime.now())
+    def __init__(self, station_short_name):
+        for s in self.get_station_information()['data']['stations']:
+            if s['short_name'] == station_short_name:
+                self.station_id = 's' + s['station_id']
+                self.capacity = s['capacity']
+                self.name = s['name']
+                break
 
     def get_station_information(self):
         return requests.get('https://api-core.bixi.com/gbfs/en/station_information.json').json()
@@ -56,37 +61,28 @@ class BixiStationOccupation:
         return requests.get('https://api-core.bixi.com/gbfs/en/station_status.json').json()
 
     def get_week_days_in_year(self, year, day):
-        pd.date_range(start=str(year), end=str(year + 1), freq=day).strftime('%Y-%m-%d').tolist()
+        return pd.date_range(start=str(year), end=str(year + 1), freq=day).strftime('%Y-%m-%d').tolist()
 
-    def get_station_occupancy(self, station_short_name, year, day, hour):
+    def get_station_occupancy(self, year, day, hour):
         conn = psycopg2.connect(host="localhost", database="bixi_db", user="bixi", password="bixi")
         cur = conn.cursor()
 
-        station_status = self.get_stations_status()
+        records = []
 
-        occupation_data = {}
+        for d in self.get_week_days_in_year(year, day):
+            date1 = datetime.strptime(d + ' ' + str(hour), '%Y-%m-%d %H')
+            date2 = datetime.strptime(d + ' ' + str(hour+1), '%Y-%m-%d %H')
+            sql = "SELECT %s FROM %s WHERE upd_timestamp >= %s AND upd_timestamp < %s" \
+                  % (self.station_id, 'occupation', "'%" + date1.strftime('%Y-%m-%d %H:%M:%S') + "%'"
+                     , "'%" + date2.strftime('%Y-%m-%d %H:%M:%S') + "%'")
+            cur.execute(sql)
+            records = records + cur.fetchall()
 
-        occupation_data['upd_timestamp'] = station_status['last_updated']
-        for station in station_status['data']['stations']:
-            occupation_data['s' + station['station_id']] = station['num_bikes_available']
-
-        for s in self.get_station_information()['data']['stations']:
-            if s['short_name'] == station_short_name:
-                station_id = s['station_id']
-                print(s)
-                break
-
-        station_id = 's' + station_id
-        placeholders = ', '.join(['%s'] * len(occupation_data))
-        columns = ', '.join(occupation_data.keys())
-
-        # for d in self.get_week_days_in_year(year, day):
-        #     sql = "SELECT %s FROM %s WHERE upd_timestamp like %s %s" % (station_id, 'occupation', d, hour)
+        for row in records:
+            self.occupation = self.occupation + row[0]/self.capacity
 
         cur.close()
         conn.close()
 
+        self.occupation = self.occupation/len(records)
 
-test = BixiStationOccupation()
-
-test.get_stations_status()
