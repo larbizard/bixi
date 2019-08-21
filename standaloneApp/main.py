@@ -4,6 +4,8 @@ import json
 from time import sleep
 import psycopg2
 from datetime import datetime
+from requests.exceptions import ConnectionError
+
 
 #bixi_201904 = pd.read_csv('data/OD_2019-04.csv')
 #bixi_201905 = pd.read_csv('data/OD_2019-05.csv')
@@ -26,34 +28,41 @@ from datetime import datetime
 
 
 while True:
+    try:
+        conn = psycopg2.connect(host="localhost", database="bixi_db", user="bixi", password="bixi")
+        cur = conn.cursor()
 
-    conn = psycopg2.connect(host="localhost", database="bixi_db", user="bixi", password="bixi")
-    cur = conn.cursor()
+        bixi_api = requests.get('https://api-core.bixi.com/gbfs/en/station_status.json')
 
-    bixi_api = requests.get('https://api-core.bixi.com/gbfs/en/station_status.json')
-    station_status = bixi_api.json()
+        if bixi_api != "No response":
+            station_status = bixi_api.json()
 
-    occupation_data = {}
+            occupation_data = {}
 
-    occupation_data['upd_timestamp'] = datetime.utcfromtimestamp(station_status['last_updated'])\
-        .strftime("%Y-%m-%d %H:%M:%S")
-    for station in station_status['data']['stations']:
-        occupation_data['s' + station['station_id']] = station['num_bikes_available']
+            occupation_data['upd_timestamp'] = datetime.utcfromtimestamp(station_status['last_updated'])\
+                .strftime("%Y-%m-%d %H:%M:%S")
+            for station in station_status['data']['stations']:
+                occupation_data['s' + station['station_id']] = station['num_bikes_available']
 
 
-    placeholders = ', '.join(['%s'] * len(occupation_data))
-    columns = ', '.join(occupation_data.keys())
-    sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % ('occupation', columns, placeholders)
+            placeholders = ', '.join(['%s'] * len(occupation_data))
+            columns = ', '.join(occupation_data.keys())
+            sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % ('occupation', columns, placeholders)
 
-    cur.execute(sql, list(occupation_data.values()))
-    conn.commit()
+            cur.execute(sql, list(occupation_data.values()))
+            conn.commit()
 
-    print(datetime.utcfromtimestamp(station_status['last_updated']).strftime("%Y-%m-%d %H:%M:%S"))
-    print(occupation_data)
+            print(datetime.utcfromtimestamp(station_status['last_updated']).strftime("%Y-%m-%d %H:%M:%S"))
+            print(json.dumps(occupation_data, indent=4, sort_keys=True))
 
-    cur.close()
-    conn.close()
+        cur.close()
+        conn.close()
 
-    sleep(300)
+        sleep(300)
+
+    except ConnectionError as e:  # This is the correct syntax
+        print(e)
+        bixi_api = "No response"
+
 
 

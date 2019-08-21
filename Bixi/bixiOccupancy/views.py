@@ -3,19 +3,44 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from .models import BixiStationOccupancy
+import json
 
 
 def index(request):
-    day = 'W-TUE'
-    hour = 15
-    BixiStationOccupancyInstance = BixiStationOccupancy('6001')
-    BixiStationOccupancyInstance.get_station_occupancy(2019, day, hour)
-    message = 'The average occupation for station ' + BixiStationOccupancyInstance.name \
-              +' on '+ day +' at ' + str(hour) + ' is: ' + str(round(100-BixiStationOccupancyInstance.occupation * 100, 2)) + u'\u0025'
+    if request.method == 'POST':
 
-    context = {
-        "title": "Bixi Occupancy",
-        "message": message
-    }
+        year = request.POST.get('year')
+        day = request.POST.get('day')
+        hour = request.POST.get('hour')
+        short_name = request.POST.get('short_name')
 
-    return render(request, "bixiOccupancy/index.html", context)
+        response_data = {}
+
+        try:
+
+            #import pdb
+            #pdb.set_trace()
+
+            BixiStationOccupancyInstance = BixiStationOccupancy(short_name)
+            BixiStationOccupancyInstance.get_station_occupancy(year, day, hour)
+
+            response_data['result'] = {
+                "name": BixiStationOccupancyInstance.name,
+                "occupancy": round(100 - BixiStationOccupancyInstance.occupation * 100, 2)
+            }
+
+            return HttpResponse(
+                json.dumps(response_data),
+                content_type="application/json"
+            )
+
+        except:
+            return HttpResponse(
+                json.dumps({"Error": "No data found"}),
+                content_type="application/json"
+            )
+    else:
+        return HttpResponse(
+            json.dumps({"nothing to see": "this isn't happening"}),
+            content_type="application/json"
+        )
