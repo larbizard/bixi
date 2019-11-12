@@ -7,20 +7,25 @@ import json
 
 
 def index(request):
+    #http://127.0.0.1:8000/bixiOccupancy/?year=2019?day=1?hour=10?short_name=25
+    """
+    {
+    'year':2019,
+    'day': "W-MON",
+    'hour': 10,
+    'short_name': 6043
+    }
+    """
     if request.method == 'POST':
-
-        year = request.POST.get('year')
-        day = request.POST.get('day')
-        hour = request.POST.get('hour')
-        short_name = request.POST.get('short_name')
+        data = json.loads(request.body)["data"]
+        year = data['year']
+        day = data['day']
+        hour = data['hour']
+        short_name = data['short_name']
 
         response_data = {}
 
         try:
-
-            #import pdb
-            #pdb.set_trace()
-
             BixiStationOccupancyInstance = BixiStationOccupancy(short_name)
             BixiStationOccupancyInstance.get_station_occupancy(year, day, hour)
 
