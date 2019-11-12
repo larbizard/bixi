@@ -34,7 +34,7 @@ class BixiStationOccupancy(models.Model):
 
     def __init__(self, station_short_name):
         for s in self.get_station_information()['data']['stations']:
-            if s['short_name'] == station_short_name:
+            if str(s['short_name']) == str(station_short_name):
                 self.station_id = 's' + s['station_id']
                 self.capacity = s['capacity']
                 self.name = s['name']
@@ -51,11 +51,10 @@ class BixiStationOccupancy(models.Model):
         return pd.date_range(start=str(year), end=str(year + 1), freq=day).strftime('%Y-%m-%d').tolist()
 
     def get_station_occupancy(self, year, day, hour):
-        conn = psycopg2.connect(host="localhost", database="bixi_db", user="bixi", password="bixi")
+        conn = psycopg2.connect(host="localhost", database="bixi_occupancy", user="bixi", password="bixi")
         cur = conn.cursor()
 
         records = []
-
         for d in self.get_week_days_in_year(year, day):
             date1 = datetime.strptime(d + ' ' + str(hour), '%Y-%m-%d %H')
             date2 = datetime.strptime(d + ' ' + str(hour+1), '%Y-%m-%d %H')
@@ -64,7 +63,6 @@ class BixiStationOccupancy(models.Model):
                      , "'%" + date2.strftime('%Y-%m-%d %H:%M:%S') + "%'")
             cur.execute(sql)
             records = records + cur.fetchall()
-
         for row in records:
             self.occupation = self.occupation + row[0]/self.capacity
 
