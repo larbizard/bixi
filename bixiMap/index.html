@@ -40,10 +40,10 @@
        }
        .footer {
         width: 100%;
-        height: 100%px;
+        height: 270px;
         background-color: white;
         padding: 2%;
-        margin-top: 70%;
+        margin-top: 60%;
        }
     </style>
 
@@ -108,15 +108,17 @@
           </form>
       <div class="footer">
           <strong>Information</strong>
-          <p>The data was parsed during 2 months this summer (2019) using Bixi API every 5 seconds. This project is for education purpose only. Using <a href="https://www.djangoproject.com/">Django (Python)</a> / <a href="https://vuejs.org/">VueJS.</a></p>
+          <p>The data was parsed during 2 months this summer (2019) using Bixi API every 5 seconds. </p>
           <p><strong>Bixi API</strong></p>
-          <a hre="https://api-core.bixi.com/gbfs/en/station_information.json">https://api-core.bixi.com/gbfs/en/station_information.json</a>
-          <a hre="https://api-core.bixi.com/gbfs/en/station_status.json">https://api-core.bixi.com/gbfs/en/station_status.json</a>
+          <a href="https://api-core.bixi.com/gbfs/en/station_information.json">https://api-core.bixi.com/gbfs/en/station_information.json</a>
+          <a href="https://api-core.bixi.com/gbfs/en/station_status.json">https://api-core.bixi.com/gbfs/en/station_status.json</a>
           <p><strong>Github</strong></p>
           <a href="https://github.com/larbizard/bixi">https://github.com/larbizard/bixi</a>
+          <p><strong>Build by</strong></p>
+          <p><img src="images/logo.png" width="24"/><a href="http://www.larbizard.com">Larbizard</a> using <a href="https://www.djangoproject.com/">Django (Python)</a> and <a href="https://vuejs.org/">VueJS.</a></p>
       </div>
   </div>
   </body>
-      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDrb6FUFel4y8dsXqbiM2s27l2oPIsT3L0&callback=initMap"></script>
+      <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY&callback=initMap"></script>
   <script src="app.js"></script>
 </html>

@@ -16,7 +16,7 @@ var vm = new Vue({
       ],
       hour: '14',
       short_name: '6043',
-      server_path: 'http://c028efcb.ngrok.io/bixiOccupancy/',
+      server_path: 'https://06f98462.ngrok.io/bixiOccupancy/',
       map: '',
       markers: []
   },
@@ -100,7 +100,7 @@ var vm = new Vue({
                     }
             }).then(response => {
               occupancy = response.data.result['occupancy'];
-              infowindow.setContent("<p style='font-size: 2vw'>At station <strong>"+ marker.title    +
+              infowindow.setContent("<p style='font-size: 1.5vw'><img src='" + this.getBikeIcon(occupancy) + "'/><br/>At station <strong>"+ marker.title    +
               "</strong><br/>on "+ this.getDayText(self.selectedDay) + "'s<br/>between <strong>" + self.hour.toString()  + ":00</strong> and <strong>" +
               (Number(self.hour)+1).toString() + ":00</strong><br/><strong>"+occupancy.toString()+"%</strong> of bikes are available.<br/>An<strong> average of " + Math.floor(occupancy*marker.station_data['capacity']/100) + " out of " + marker.station_data['capacity'] + " bikes.</strong></p>");
               marker.setIcon(self.getBikeIcon(occupancy));
